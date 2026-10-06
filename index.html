@@ -1,0 +1,1319 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>식물 세밀화 첨삭 - Botanical Art Critique</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        botanical: {
+                            50: '#f4f7f4',
+                            100: '#e6ede6',
+                            200: '#cfdccf',
+                            300: '#adc3ad',
+                            400: '#83a384',
+                            500: '#5e7d67',
+                            600: '#486350',
+                            700: '#3b5042',
+                            800: '#314237',
+                            900: '#2a372f',
+                        },
+                        paper: '#f8f8f5',
+                    },
+                    fontFamily: {
+                        serif: ['Georgia', 'Cambria', 'serif'],
+                        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background-color: #f3f4f0;
+            color: #2d3748;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        }
+        .paper-card {
+            background-color: #ffffff;
+            box-shadow: 0 2px 12px -2px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e5e7eb;
+        }
+        /* Custom Split / Overlay Slider Styling */
+        .comparison-container {
+            position: relative;
+            overflow: hidden;
+            user-select: none;
+        }
+        .slider-divider {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background-color: #5e7d67;
+            cursor: ew-resize;
+            z-index: 10;
+        }
+        .slider-handle {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 36px;
+            height: 36px;
+            background-color: #ffffff;
+            border: 2px solid #5e7d67;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            color: #5e7d67;
+        }
+        /* Status Badges Matching User's Design */
+        .badge-need-fix {
+            border: 1px solid #ef4444;
+            color: #dc2626;
+            background-color: #fef2f2;
+            border-radius: 9999px;
+            padding: 2px 10px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-block;
+        }
+        .badge-none-yet {
+            border: 1px dashed #9ca3af;
+            color: #6b7280;
+            background-color: #f9fafb;
+            border-radius: 9999px;
+            padding: 2px 10px;
+            font-size: 12px;
+            font-weight: 500;
+            display: inline-block;
+        }
+        .badge-fair {
+            border: 1px solid #d97706;
+            color: #b45309;
+            background-color: #fffbeb;
+            border-radius: 9999px;
+            padding: 2px 10px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-block;
+        }
+        .badge-well-done {
+            border: 1px solid #059669;
+            color: #047857;
+            background-color: #ecfdf5;
+            border-radius: 9999px;
+            padding: 2px 10px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-block;
+        }
+        /* Loading pulse */
+        @keyframes subtle-pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+        .animate-subtle {
+            animation: subtle-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+    </style>
+</head>
+<body class="min-h-screen py-8 px-4 sm:px-6 lg:px-8">
+
+    <!-- Main Container -->
+    <div class="max-w-4xl mx-auto">
+
+        <!-- Header -->
+        <header class="mb-8 border-b border-gray-200 pb-6">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                    <h1 class="text-3xl sm:text-4xl font-serif font-bold text-gray-900 tracking-tight flex items-center gap-3">
+                        <span class="text-botanical-600"><i class="fa-solid fa-leaf"></i></span>
+                        식물 세밀화 첨삭
+                    </h1>
+                    <p class="mt-2 text-sm sm:text-base text-gray-600">
+                        실물 사진과 내가 그린 스케치를 올리면, 1:1 보타니컬 아트 전문가 양식에 맞춘 맞춤 피드백을 작성해 드려요.
+                    </p>
+                </div>
+                <!-- Demo Presets Trigger -->
+                <div class="flex flex-wrap gap-2 text-xs">
+                    <span class="text-gray-500 self-center font-medium">샘플 보기:</span>
+                    <button onclick="loadPreset('scindapsus')" class="px-3 py-1.5 bg-white border border-gray-300 rounded-md text-gray-700 hover:bg-botanical-50 hover:border-botanical-300 transition-colors shadow-sm font-medium">
+                        🌿 첫 번째 잎 그림 예시
+                    </button>
+                    <button onclick="loadPreset('ginkgo')" class="px-3 py-1.5 bg-white border border-gray-300 rounded-md text-gray-700 hover:bg-botanical-50 hover:border-botanical-300 transition-colors shadow-sm font-medium">
+                        🍂 은행나무 잎 예시
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Image Upload Cards Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+
+            <!-- FIG. 1 실물 (Real Specimen) -->
+            <div class="paper-card rounded-xl p-5 flex flex-col justify-between">
+                <div>
+                    <div class="flex justify-between items-center mb-3">
+                        <h2 class="text-xs font-mono font-bold tracking-wider text-gray-500 uppercase">
+                            FIG. 1 &nbsp;<span class="text-base font-serif font-bold text-gray-800">실물 사진</span> <span class="text-xs font-sans text-gray-400 font-normal">(선택)</span>
+                        </h2>
+                        <span class="text-xs text-botanical-600 font-medium bg-botanical-50 px-2 py-0.5 rounded">관찰 기준</span>
+                    </div>
+
+                    <!-- Upload / Preview Box -->
+                    <div id="fig1-box" class="relative bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg h-64 flex flex-col items-center justify-center overflow-hidden group hover:border-botanical-400 transition-colors">
+                        <img id="fig1-preview" class="hidden w-full h-full object-contain p-2" alt="실물 스케치 대상">
+                        
+                        <div id="fig1-placeholder" class="text-center p-6 cursor-pointer" onclick="document.getElementById('fig1-input').click()">
+                            <div class="w-12 h-12 rounded-full bg-botanical-50 text-botanical-600 flex items-center justify-center mx-auto mb-3 text-xl">
+                                <i class="fa-solid fa-camera"></i>
+                            </div>
+                            <p class="text-sm font-medium text-gray-700 mb-1">실물 잎 사진 올리기</p>
+                            <p class="text-xs text-gray-400">클릭하거나 드래그앤드롭</p>
+                        </div>
+
+                        <input type="file" id="fig1-input" class="hidden" accept="image/*" onchange="handleImageUpload(event, 1)">
+                    </div>
+
+                    <div class="flex items-center gap-4 mt-3 text-xs text-gray-600">
+                        <button onclick="document.getElementById('fig1-input').click()" class="hover:underline hover:text-botanical-700 font-medium">
+                            <i class="fa-solid fa-arrows-rotate mr-1"></i>사진 바꾸기
+                        </button>
+                        <span class="text-gray-300">|</span>
+                        <button onclick="clearImage(1)" class="hover:underline hover:text-red-600 text-gray-500">
+                            <i class="fa-solid fa-trash-can mr-1"></i>지우기
+                        </button>
+                    </div>
+                </div>
+
+                <p class="mt-4 text-xs text-gray-500 leading-relaxed bg-gray-50 p-2.5 rounded border border-gray-100">
+                    💡 그림과 같은 방향으로 놓고 수직으로 촬영해 주세요.
+                </p>
+            </div>
+
+            <!-- FIG. 2 내 그림 (My Drawing) -->
+            <div class="paper-card rounded-xl p-5 flex flex-col justify-between border-2 border-botanical-200">
+                <div>
+                    <div class="flex justify-between items-center mb-3">
+                        <h2 class="text-xs font-mono font-bold tracking-wider text-gray-500 uppercase">
+                            FIG. 2 &nbsp;<span class="text-base font-serif font-bold text-gray-800">내 그림</span> <span class="text-xs font-sans text-red-500 font-semibold">(필수)</span>
+                        </h2>
+                        <span class="text-xs text-red-600 font-medium bg-red-50 px-2 py-0.5 rounded">첨삭 대상</span>
+                    </div>
+
+                    <!-- Upload / Preview Box -->
+                    <div id="fig2-box" class="relative bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg h-64 flex flex-col items-center justify-center overflow-hidden group hover:border-botanical-400 transition-colors">
+                        <img id="fig2-preview" class="hidden w-full h-full object-contain p-2" alt="내가 그린 그림">
+                        
+                        <div id="fig2-placeholder" class="text-center p-6 cursor-pointer" onclick="document.getElementById('fig2-input').click()">
+                            <div class="w-12 h-12 rounded-full bg-botanical-50 text-botanical-600 flex items-center justify-center mx-auto mb-3 text-xl">
+                                <i class="fa-solid fa-pen-nib"></i>
+                            </div>
+                            <p class="text-sm font-medium text-gray-700 mb-1">그림 사진 올리기</p>
+                            <p class="text-xs text-gray-400">클릭하거나 드래그앤드롭</p>
+                        </div>
+
+                        <input type="file" id="fig2-input" class="hidden" accept="image/*" onchange="handleImageUpload(event, 2)">
+                    </div>
+
+                    <div class="flex items-center gap-4 mt-3 text-xs text-gray-600">
+                        <button onclick="document.getElementById('fig2-input').click()" class="hover:underline hover:text-botanical-700 font-medium">
+                            <i class="fa-solid fa-arrows-rotate mr-1"></i>사진 바꾸기
+                        </button>
+                        <span class="text-gray-300">|</span>
+                        <button onclick="clearImage(2)" class="hover:underline hover:text-red-600 text-gray-500">
+                            <i class="fa-solid fa-trash-can mr-1"></i>지우기
+                        </button>
+                    </div>
+                </div>
+
+                <p class="mt-4 text-xs text-gray-500 leading-relaxed bg-gray-50 p-2.5 rounded border border-gray-100">
+                    💡 종이가 화면에 가득 차도록 그늘 없이 밝게 찍어주세요.
+                </p>
+            </div>
+
+        </div>
+
+        <!-- Plant Info & Settings Card -->
+        <div class="paper-card rounded-xl p-5 mb-8">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+                <div class="md:col-span-2">
+                    <label for="plant-name" class="block text-xs font-semibold text-gray-700 uppercase tracking-wide mb-1.5">
+                        식물 이름 <span class="text-gray-400 font-normal">(모르면 비워 둬도 됩니다)</span>
+                    </label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                            <i class="fa-solid fa-seedling"></i>
+                        </div>
+                        <input type="text" id="plant-name" placeholder="예: 스킨답서스, 은행나무, 몬스테라" class="w-full pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-300 rounded-lg text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-botanical-500 focus:border-transparent transition-all">
+                    </div>
+                </div>
+
+                <div>
+                    <label for="critique-tone" class="block text-xs font-semibold text-gray-700 uppercase tracking-wide mb-1.5">
+                        첨삭 어조
+                    </label>
+                    <select id="critique-tone" class="w-full px-3 py-2.5 bg-gray-50 border border-gray-300 rounded-lg text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-botanical-500">
+                        <option value="친절하고 용기를 주는 다정한 선생님 톤">🌱 다정하고 명확한 톤</option>
+                        <option value="보타니컬 아카데미 전문 강사 톤">📐 정밀 분석 아카데미 톤</option>
+                        <option value="쉽고 꼼꼼한 초보자/어린이 톤">🎈 쉽고 다정한 초보자 톤</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Submit Button Section -->
+            <div class="mt-6 flex flex-col sm:flex-row items-center gap-4 pt-4 border-t border-gray-100">
+                <button id="btn-submit" onclick="startCritique()" class="w-full sm:w-auto px-8 py-3.5 bg-botanical-600 hover:bg-botanical-700 active:bg-botanical-800 text-white font-medium text-base rounded-lg shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    <span>첨삭 받기</span>
+                </button>
+
+                <p id="status-text" class="text-xs text-gray-500 text-center sm:text-left flex-1">
+                    그림 사진(FIG. 2)을 올린 후 '첨삭 받기'를 눌러주세요.
+                </p>
+            </div>
+        </div>
+
+        <!-- Visual Comparison Overlay Tool (Hidden until images uploaded) -->
+        <div id="comparison-tool-section" class="hidden paper-card rounded-xl p-5 mb-8">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
+                <div>
+                    <h3 class="font-serif font-bold text-gray-800 text-lg flex items-center gap-2">
+                        <i class="fa-solid fa-layer-group text-botanical-600"></i>
+                        실물 & 내 그림 비교 슬라이더
+                    </h3>
+                    <p class="text-xs text-gray-500">슬라이더를 움직여 실물과 내 그림의 형태, 비율을 대조해보세요.</p>
+                </div>
+                <div class="flex items-center gap-1 bg-gray-100 p-1 rounded-lg text-xs font-medium">
+                    <button id="btn-mode-curtain" onclick="setCompareMode('curtain')" class="px-3 py-1.5 rounded-md bg-white shadow-sm text-gray-800">
+                        <i class="fa-solid fa-sliders mr-1 text-botanical-600"></i>분할 비교
+                    </button>
+                    <button id="btn-mode-opacity" onclick="setCompareMode('opacity')" class="px-3 py-1.5 rounded-md text-gray-600 hover:text-gray-900">
+                        <i class="fa-solid fa-circle-half-stroke mr-1"></i>투명도 겹치기
+                    </button>
+                </div>
+            </div>
+
+            <div class="bg-gray-900 rounded-xl overflow-hidden relative h-80 sm:h-96 flex items-center justify-center">
+                <div id="curtain-container" class="comparison-container w-full h-full relative">
+                    <img id="curtain-bg" class="w-full h-full object-contain select-none" alt="Drawing">
+                    
+                    <div id="curtain-overlay-wrap" class="absolute top-0 left-0 bottom-0 overflow-hidden" style="width: 50%;">
+                        <img id="curtain-fg" class="h-full object-contain select-none" alt="Real Specimen" style="max-width: none;">
+                    </div>
+
+                    <div id="slider-divider" class="slider-divider" style="left: 50%;">
+                        <div class="slider-handle">
+                            <i class="fa-solid fa-left-right text-xs"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="opacity-container" class="hidden relative w-full h-full flex items-center justify-center">
+                    <img id="opacity-bg" class="w-full h-full object-contain absolute inset-0" alt="Real Specimen">
+                    <img id="opacity-fg" class="w-full h-full object-contain absolute inset-0 opacity-50 mix-blend-difference" alt="Drawing">
+                </div>
+            </div>
+
+            <div class="mt-4 flex flex-wrap items-center justify-between gap-4 bg-gray-50 p-3 rounded-lg text-xs text-gray-600">
+                <div id="opacity-slider-wrap" class="hidden flex items-center gap-3 w-full sm:w-64">
+                    <span>그림 투명도</span>
+                    <input type="range" id="opacity-range" min="0" max="100" value="50" oninput="updateOpacity(this.value)" class="w-full accent-botanical-600">
+                    <span id="opacity-val" class="font-mono w-8">50%</span>
+                </div>
+                <div class="flex items-center gap-4">
+                    <label class="flex items-center gap-1.5 cursor-pointer">
+                        <input type="checkbox" id="chk-grayscale" onchange="toggleGrayscale(this.checked)" class="rounded text-botanical-600 focus:ring-botanical-500">
+                        <span>흑백 보기 (외곽선 집중)</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Section (Matching User's Requested Critique Format) -->
+        <div id="result-section" class="hidden space-y-6">
+
+            <!-- MAIN CRITIQUE CARD (예시 첨삭 스타일) -->
+            <div class="paper-card rounded-xl p-6 sm:p-8 bg-white border border-gray-200 shadow-sm">
+                
+                <!-- Subtitle / Top Header -->
+                <div class="flex items-center justify-between border-b border-gray-100 pb-4 mb-6">
+                    <div>
+                        <h3 class="text-2xl font-serif font-bold text-gray-900 tracking-tight">
+                            내 첨삭 피드백
+                        </h3>
+                        <p id="critique-subnote" class="text-xs text-gray-500 mt-1">
+                            제출하신 그림을 보타니컬 아카데미 가이드라인에 맞춰 세밀하게 분석했습니다.
+                        </p>
+                    </div>
+
+                    <button id="btn-tts" onclick="playTTSFeedback()" class="px-3.5 py-2 bg-gray-50 border border-gray-200 hover:border-botanical-500 hover:bg-botanical-50 text-gray-700 rounded-lg text-xs font-medium transition-all shadow-xs flex items-center gap-2">
+                        <i class="fa-solid fa-volume-high text-botanical-600"></i>
+                        <span id="tts-btn-text">선생님 음성으로 들려주기</span>
+                    </button>
+                </div>
+
+                <!-- 1. 총평 Section -->
+                <div class="mb-8">
+                    <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 font-mono">총평</h4>
+                    <p id="critique-overall-summary" class="text-lg sm:text-xl font-medium text-gray-800 leading-relaxed">
+                        --
+                    </p>
+                </div>
+
+                <!-- 2. 항목별로 보면 (Category Table) -->
+                <div class="mb-8">
+                    <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 font-mono">항목별로 보면</h4>
+                    
+                    <div id="category-critique-list" class="divide-y divide-gray-100 border-t border-b border-gray-100">
+                        <!-- Dynamic rendering of categories: 형태, 잎맥, 가장자리, 명암·질감, 선의 질 -->
+                    </div>
+                </div>
+
+                <!-- 3. 잘한 점 (Checklist) -->
+                <div class="mb-8 bg-emerald-50/40 p-5 rounded-xl border border-emerald-100">
+                    <h4 class="text-sm font-bold text-gray-900 mb-3 flex items-center gap-2">
+                        <i class="fa-solid fa-circle-check text-emerald-600 text-base"></i>
+                        잘한 점
+                    </h4>
+                    <ul id="strengths-list" class="space-y-2 text-sm text-gray-700">
+                        <!-- Dynamic list items with ✓ -->
+                    </ul>
+                </div>
+
+                <!-- 4. 고칠 점 우선순위 순 (Priority Steps) -->
+                <div class="mb-8">
+                    <h4 class="text-sm font-bold text-gray-900 mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-arrow-down-short-wide text-botanical-600"></i>
+                        고칠 점 우선순위 순
+                    </h4>
+                    <div id="priority-list" class="space-y-4">
+                        <!-- Dynamic priority cards 1, 2, 3 -->
+                    </div>
+                </div>
+
+                <!-- 5. 다음 그림 연습 순서 -->
+                <div class="p-5 bg-gray-50 rounded-xl border border-gray-200">
+                    <h4 class="text-sm font-bold text-gray-900 mb-3 flex items-center gap-2">
+                        <i class="fa-solid fa-list-ol text-gray-700"></i>
+                        다음 그림 연습 순서
+                    </h4>
+                    <ol id="practice-steps-list" class="space-y-2 text-sm text-gray-700 font-medium">
+                        <!-- Dynamic 1, 2, 3, 4 step list -->
+                    </ol>
+                </div>
+
+            </div>
+
+            <!-- ✏️ 빨간선 첨삭 이미지 (Red Overlay Visual Critique) -->
+            <div class="paper-card rounded-xl p-5 border-2 border-red-200 bg-gradient-to-b from-red-50/20 to-white shadow-xs">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
+                    <div>
+                        <h4 class="font-serif font-bold text-gray-900 text-lg flex items-center gap-2">
+                            <span class="w-7 h-7 rounded-full bg-red-100 text-red-600 inline-flex items-center justify-center text-sm">
+                                <i class="fa-solid fa-pen-nib"></i>
+                            </span>
+                            빨간선 이미지 교정 (Red Overlay)
+                        </h4>
+                        <p class="text-xs text-gray-600 mt-0.5">그림 위에 수정할 위치, 윤곽선, 주맥 각도를 빨간펜 오버레이로 그려 드립니다.</p>
+                    </div>
+                    <button id="btn-toggle-red-overlay" onclick="toggleRedOverlayView()" class="px-3.5 py-1.5 bg-white border border-red-300 rounded-lg text-red-700 hover:bg-red-50 font-medium text-xs shadow-xs transition-all flex items-center gap-1.5 shrink-0">
+                        <i class="fa-solid fa-eye"></i> <span id="toggle-red-text">원본 그림과 대조하기</span>
+                    </button>
+                </div>
+
+                <!-- Display Canvas / Image Area -->
+                <div id="red-annotated-container" class="relative bg-gray-900 rounded-xl overflow-hidden h-80 sm:h-96 flex items-center justify-center p-2 border border-gray-200">
+                    <img id="red-annotated-img" class="w-full h-full object-contain" alt="빨간선 첨삭 이미지">
+                    
+                    <div id="red-overlay-loading" class="absolute inset-0 bg-white/95 backdrop-blur-xs flex flex-col items-center justify-center p-4 z-10">
+                        <div class="w-10 h-10 border-4 border-red-200 border-t-red-600 rounded-full animate-spin mb-3"></div>
+                        <p class="text-sm font-bold text-gray-800">빨간색 첨삭선을 생성하는 중...</p>
+                        <p class="text-xs text-gray-500 mt-1">잎끝 굴곡, 잎맥 각도 가이드를 그리는 중입니다.</p>
+                    </div>
+                </div>
+
+                <!-- Red Annotation Details -->
+                <div id="red-critique-list" class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <!-- Dynamic Items -->
+                </div>
+            </div>
+
+            <!-- 🍃 식물학 관찰 노트 -->
+            <div class="paper-card rounded-xl p-5 bg-botanical-50/60 border border-botanical-200">
+                <h4 class="font-serif font-bold text-botanical-800 text-base mb-2 flex items-center gap-2">
+                    <i class="fa-solid fa-book-bookmark text-botanical-600"></i>
+                    식물학 관찰 노트 (Botanical Note)
+                </h4>
+                <p id="botanical-note-text" class="text-xs sm:text-sm text-botanical-900 leading-relaxed">
+                    --
+                </p>
+            </div>
+
+            <!-- Share / Reset Bar -->
+            <div class="flex justify-end gap-3 pt-2">
+                <button onclick="window.print()" class="px-4 py-2 bg-white border border-gray-300 rounded-lg text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+                    <i class="fa-solid fa-print mr-1.5"></i>결과 인쇄 / 저장
+                </button>
+            </div>
+
+        </div>
+
+        <!-- Footer -->
+        <footer class="mt-12 text-center text-xs text-gray-400 border-t border-gray-200 pt-6">
+            <p>식물 세밀화(Botanical Illustration) AI 첨삭 피드백 서비스 &bull; Powered by Gemini AI</p>
+        </footer>
+
+    </div>
+
+    <script>
+        // Global State
+        const state = {
+            fig1Base64: null, // Real Specimen
+            fig2Base64: null, // Drawing
+            redAnnotatedBase64: null, // Red-lined Annotated Image
+            isShowingOriginalInRedCard: false,
+            compareMode: 'curtain',
+            lastCritiqueTextForTTS: "",
+            audioObj: null
+        };
+
+        // DOM Elements
+        const fig1Preview = document.getElementById('fig1-preview');
+        const fig1Placeholder = document.getElementById('fig1-placeholder');
+        const fig2Preview = document.getElementById('fig2-preview');
+        const fig2Placeholder = document.getElementById('fig2-placeholder');
+        const statusText = document.getElementById('status-text');
+        const btnSubmit = document.getElementById('btn-submit');
+        const comparisonTool = document.getElementById('comparison-tool-section');
+        const resultSection = document.getElementById('result-section');
+
+        // Handle File Upload
+        function handleImageUpload(event, figNum) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const base64 = e.target.result;
+                setImageData(figNum, base64);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function setImageData(figNum, base64) {
+            if (figNum === 1) {
+                state.fig1Base64 = base64;
+                fig1Preview.src = base64;
+                fig1Preview.classList.remove('hidden');
+                fig1Placeholder.classList.add('hidden');
+            } else {
+                state.fig2Base64 = base64;
+                fig2Preview.src = base64;
+                fig2Preview.classList.remove('hidden');
+                fig2Placeholder.classList.add('hidden');
+            }
+            updateComparisonViews();
+        }
+
+        function clearImage(figNum) {
+            if (figNum === 1) {
+                state.fig1Base64 = null;
+                fig1Preview.src = '';
+                fig1Preview.classList.add('hidden');
+                fig1Placeholder.classList.remove('hidden');
+                document.getElementById('fig1-input').value = '';
+            } else {
+                state.fig2Base64 = null;
+                fig2Preview.src = '';
+                fig2Preview.classList.add('hidden');
+                fig2Placeholder.classList.remove('hidden');
+                document.getElementById('fig2-input').value = '';
+            }
+            updateComparisonViews();
+        }
+
+        // Setup Comparison Overlay Slider
+        function updateComparisonViews() {
+            if (state.fig1Base64 && state.fig2Base64) {
+                comparisonTool.classList.remove('hidden');
+                
+                document.getElementById('curtain-bg').src = state.fig2Base64;
+                document.getElementById('curtain-fg').src = state.fig1Base64;
+                
+                document.getElementById('opacity-bg').src = state.fig1Base64;
+                document.getElementById('opacity-fg').src = state.fig2Base64;
+            } else {
+                comparisonTool.classList.add('hidden');
+            }
+        }
+
+        // Curtain Slider Drag Interaction
+        const curtainContainer = document.getElementById('curtain-container');
+        const overlayWrap = document.getElementById('curtain-overlay-wrap');
+        const divider = document.getElementById('slider-divider');
+        const curtainFg = document.getElementById('curtain-fg');
+        let isDragging = false;
+
+        function updateCurtainWidth(clientX) {
+            if (!curtainContainer) return;
+            const rect = curtainContainer.getBoundingClientRect();
+            let x = clientX - rect.left;
+            if (x < 0) x = 0;
+            if (x > rect.width) x = rect.width;
+            const pct = (x / rect.width) * 100;
+            
+            overlayWrap.style.width = pct + '%';
+            divider.style.left = pct + '%';
+            curtainFg.style.width = rect.width + 'px';
+        }
+
+        divider.addEventListener('mousedown', () => isDragging = true);
+        window.addEventListener('mouseup', () => isDragging = false);
+        window.addEventListener('mousemove', (e) => {
+            if (isDragging) updateCurtainWidth(e.clientX);
+        });
+
+        divider.addEventListener('touchstart', () => isDragging = true);
+        window.addEventListener('touchend', () => isDragging = false);
+        window.addEventListener('touchmove', (e) => {
+            if (isDragging && e.touches[0]) updateCurtainWidth(e.touches[0].clientX);
+        });
+
+        function setCompareMode(mode) {
+            state.compareMode = mode;
+            const curtainEl = document.getElementById('curtain-container');
+            const opacityEl = document.getElementById('opacity-container');
+            const opacitySliderWrap = document.getElementById('opacity-slider-wrap');
+            
+            const btnCurtain = document.getElementById('btn-mode-curtain');
+            const btnOpacity = document.getElementById('btn-mode-opacity');
+
+            if (mode === 'curtain') {
+                curtainEl.classList.remove('hidden');
+                opacityEl.classList.add('hidden');
+                opacitySliderWrap.classList.add('hidden');
+                btnCurtain.className = "px-3 py-1.5 rounded-md bg-white shadow-xs text-gray-800 font-medium";
+                btnOpacity.className = "px-3 py-1.5 rounded-md text-gray-600 hover:text-gray-900";
+            } else {
+                curtainEl.classList.add('hidden');
+                opacityEl.classList.remove('hidden');
+                opacitySliderWrap.classList.remove('hidden');
+                btnOpacity.className = "px-3 py-1.5 rounded-md bg-white shadow-xs text-gray-800 font-medium";
+                btnCurtain.className = "px-3 py-1.5 rounded-md text-gray-600 hover:text-gray-900";
+            }
+        }
+
+        function updateOpacity(val) {
+            document.getElementById('opacity-val').textContent = val + '%';
+            document.getElementById('opacity-fg').style.opacity = val / 100;
+        }
+
+        function toggleGrayscale(checked) {
+            const filter = checked ? 'grayscale(100%) contrast(120%)' : 'none';
+            document.getElementById('curtain-bg').style.filter = filter;
+            document.getElementById('curtain-fg').style.filter = filter;
+            document.getElementById('opacity-bg').style.filter = filter;
+            document.getElementById('opacity-fg').style.filter = filter;
+        }
+
+        async function startCritique() {
+            if (!state.fig2Base64) {
+                statusText.innerHTML = `<span class="text-red-600 font-semibold"><i class="fa-solid fa-triangle-exclamation mr-1"></i>내 그림 사진(FIG. 2)을 먼저 업로드해 주세요.</span>`;
+                return;
+            }
+
+            btnSubmit.disabled = true;
+            btnSubmit.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> <span>세밀화 분석 중...</span>`;
+            statusText.innerHTML = `<span class="text-botanical-700 font-medium animate-subtle"><i class="fa-solid fa-microscope mr-1"></i>형태, 잎맥, 선의 질을 분석하고 맞춤 첨삭 의견을 작성 중입니다...</span>`;
+            
+            resultSection.classList.add('hidden');
+
+            const plantName = document.getElementById('plant-name').value.trim();
+            const tone = document.getElementById('critique-tone').value;
+
+            try {
+                const [critiqueResult] = await Promise.all([
+                    fetchGeminiCritique(state.fig1Base64, state.fig2Base64, plantName, tone),
+                    fetchRedAnnotatedImage(state.fig2Base64, state.fig1Base64, plantName)
+                ]);
+
+                renderResults(critiqueResult);
+                statusText.innerHTML = `<span class="text-emerald-700 font-medium"><i class="fa-solid fa-circle-check mr-1"></i>첨삭 완료! 아래 첨삭 결과와 교정 가이드를 확인해 보세요.</span>`;
+            } catch (err) {
+                console.error("Critique Error:", err);
+                statusText.innerHTML = `<span class="text-red-600 font-medium"><i class="fa-solid fa-triangle-exclamation mr-1"></i>분석 중 오류가 발생했습니다. 다시 시도해 주세요. (${err.message || '네트워크 오류'})</span>`;
+            } finally {
+                btnSubmit.disabled = false;
+                btnSubmit.innerHTML = `<i class="fa-solid fa-wand-magic-sparkles"></i> <span>첨삭 받기</span>`;
+            }
+        }
+
+        // Fetch Red-Annotated Image Overlay
+        async function fetchRedAnnotatedImage(drawingBase64, realBase64, plantName) {
+            const redLoading = document.getElementById('red-overlay-loading');
+            const redImg = document.getElementById('red-annotated-img');
+            if (redLoading) redLoading.classList.remove('hidden');
+
+            try {
+                const apiKey = "";
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image:generateContent?key=${apiKey}`;
+
+                let promptText = "Act as a professional botanical art instructor correcting a student's pencil drawing. Edit this drawing image directly: Draw bold, clear BRIGHT RED teacher correction lines (빨간색 첨삭선), red correction circles around inaccurate curves, red arrows pointing to vein directions, and red dashed ideal contour lines over the original pencil drawing. Ensure red annotations (#FF0000) stand out clearly like a red marker pen over the original drawing.";
+                if (plantName) promptText += ` Target plant species: ${plantName}.`;
+
+                const parts = [
+                    { text: promptText },
+                    {
+                        inlineData: {
+                            mimeType: getMimeType(drawingBase64),
+                            data: getCleanBase64(drawingBase64)
+                        }
+                    }
+                ];
+
+                if (realBase64) {
+                    parts.push({ text: "Reference real plant specimen for accurate red line positioning:" });
+                    parts.push({
+                        inlineData: {
+                            mimeType: getMimeType(realBase64),
+                            data: getCleanBase64(realBase64)
+                        }
+                    });
+                }
+
+                const payload = {
+                    contents: [{ role: "user", parts: parts }],
+                    generationConfig: {
+                        responseModalities: ["IMAGE", "TEXT"]
+                    }
+                };
+
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                const data = await response.json();
+                
+                const candidate = data.candidates?.[0];
+                const imgPart = candidate?.content?.parts?.find(p => p.inlineData);
+                if (imgPart && imgPart.inlineData?.data) {
+                    const resultImg = `data:${imgPart.inlineData.mimeType};base64,${imgPart.inlineData.data}`;
+                    state.redAnnotatedBase64 = resultImg;
+                    redImg.src = resultImg;
+                } else {
+                    generateFallbackRedOverlayCanvas(drawingBase64);
+                }
+            } catch (e) {
+                console.warn("Image API fallback used for red annotations:", e);
+                generateFallbackRedOverlayCanvas(drawingBase64);
+            } finally {
+                if (redLoading) redLoading.classList.add('hidden');
+            }
+        }
+
+        // Canvas Red Overlay Fallback Generator
+        function generateFallbackRedOverlayCanvas(drawingBase64) {
+            const redImg = document.getElementById('red-annotated-img');
+            const img = new Image();
+            img.crossOrigin = "anonymous";
+            img.onload = function() {
+                const canvas = document.createElement('canvas');
+                canvas.width = img.width || 600;
+                canvas.height = img.height || 600;
+                const ctx = canvas.getContext('2d');
+
+                ctx.drawImage(img, 0, 0);
+
+                const w = canvas.width;
+                const h = canvas.height;
+
+                ctx.strokeStyle = '#ef4444';
+                ctx.fillStyle = '#ef4444';
+                ctx.lineWidth = Math.max(3, w * 0.006);
+
+                // Circle Apex
+                ctx.beginPath();
+                ctx.arc(w * 0.5, h * 0.22, Math.min(w, h) * 0.08, 0, Math.PI * 2);
+                ctx.stroke();
+
+                ctx.font = `bold ${Math.max(12, Math.round(w * 0.024))}px sans-serif`;
+                ctx.fillText("← 잎끝 비율 보정", w * 0.6, h * 0.22);
+
+                // Dashed Contour
+                ctx.setLineDash([8, 6]);
+                ctx.beginPath();
+                ctx.moveTo(w * 0.5, h * 0.15);
+                ctx.bezierCurveTo(w * 0.78, h * 0.35, w * 0.75, h * 0.7, w * 0.5, h * 0.82);
+                ctx.stroke();
+                ctx.setLineDash([]);
+
+                // Vein Arrows
+                const drawArrow = (fromx, fromy, tox, toy) => {
+                    const headlen = 10;
+                    const dx = tox - fromx;
+                    const dy = toy - fromy;
+                    const angle = Math.atan2(dy, dx);
+                    ctx.beginPath();
+                    ctx.moveTo(fromx, fromy);
+                    ctx.lineTo(tox, toy);
+                    ctx.lineTo(tox - headlen * Math.cos(angle - Math.PI / 6), toy - headlen * Math.sin(angle - Math.PI / 6));
+                    ctx.moveTo(tox, toy);
+                    ctx.lineTo(tox - headlen * Math.cos(angle + Math.PI / 6), toy - headlen * Math.sin(angle + Math.PI / 6));
+                    ctx.stroke();
+                };
+
+                drawArrow(w * 0.5, h * 0.42, w * 0.68, h * 0.48);
+                drawArrow(w * 0.5, h * 0.55, w * 0.32, h * 0.61);
+
+                ctx.fillText("← 측맥 위치 및 각도", w * 0.7, h * 0.48);
+
+                const dataUrl = canvas.toDataURL('image/png');
+                state.redAnnotatedBase64 = dataUrl;
+                redImg.src = dataUrl;
+            };
+            img.src = drawingBase64;
+        }
+
+        function toggleRedOverlayView() {
+            const redImg = document.getElementById('red-annotated-img');
+            const toggleText = document.getElementById('toggle-red-text');
+
+            if (!state.isShowingOriginalInRedCard) {
+                redImg.src = state.fig2Base64;
+                toggleText.textContent = "빨간 첨삭선 보기";
+                state.isShowingOriginalInRedCard = true;
+            } else {
+                redImg.src = state.redAnnotatedBase64 || state.fig2Base64;
+                toggleText.textContent = "원본 그림과 대조하기";
+                state.isShowingOriginalInRedCard = false;
+            }
+        }
+
+        async function fetchGeminiCritique(realBase64, drawingBase64, plantName, tone) {
+            const apiKey = "";
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+
+            let promptText = `식물 세밀화(Botanical Illustration) 전문가 강사로서 학생이 작성한 연필 스케치 그림을 평가해 주세요.\n`;
+            if (plantName) promptText += `대상 식물: "${plantName}"\n`;
+            promptText += `첨삭 어조: ${tone}\n\n`;
+
+            if (realBase64) {
+                promptText += `제시된 이미지 1: 실물 잎 사진 (기준)\n제시된 이미지 2: 학생 스케치 그림 사진\n둘을 엄밀히 비교하여 지정된 JSON 구조로 상세 피드백을 작성해 주세요.\n`;
+            } else {
+                promptText += `제시된 이미지: 학생 스케치 그림 사진 (실물 사진 없음. 그림 자체의 형태, 잎맥, 선의 질 분석)\n`;
+            }
+
+            promptText += `\n반드시 다음 JSON 형식으로만 답해주세요:
+{
+  "summary": "총평 한두 문장 (예: 윤곽선이 떨림 없이 매끄럽고, 연하게 시작해서 고치기 쉬운 상태예요. 가장 큰 차이인 전체 비율과 주맥 위치만 바로잡으면 훨씬 실물다워져요.)",
+  "categories": [
+    {
+      "name": "형태",
+      "status": "손볼 곳",
+      "comment": "실물은 통통한 달걀형인데 그림은 길쭉해요. 실물의 길이 대 폭은 약 2 대 1이에요."
+    },
+    {
+      "name": "잎맥",
+      "status": "아직 없어요",
+      "comment": "주맥만 있고 측맥은 아직 없어요. 다음 그림에서 3~4쌍만 연하게 넣어 보세요."
+    },
+    {
+      "name": "가장자리",
+      "status": "무난해요",
+      "comment": "가장자리가 매끈한 잎이라 윤곽을 부드럽게 이은 방향이 맞아요."
+    },
+    {
+      "name": "명암·질감",
+      "status": "아직 없어요",
+      "comment": "아직 명암이 없어요. 윤곽과 잎맥이 잡힌 뒤에 시작해도 늦지 않아요."
+    },
+    {
+      "name": "선의 질",
+      "status": "잘했어요",
+      "comment": "선이 끊이지 않고 한 번에 이어져 있어요. 힘 조절이 좋아요."
+    }
+  ],
+  "strengths": [
+    "윤곽선이 매끄러워요. 한 번에 쭉 그어서 손 컨트롤이 생각보다 좋아요.",
+    "연하게 시작했어요. 고치기 쉬워서 아주 좋은 습관이에요.",
+    "잎 끝에서 두 선이 만나는 지점을 표현하려고 시도했어요."
+  ],
+  "priorityImprovements": [
+    {
+      "title": "전체 비율을 먼저 재 보세요",
+      "detail": "그리기 전에 길이와 폭이 대략 몇 대 몇인지 눈으로 재요. 이 잎은 2 대 1 정도라서, 주맥 길이를 정한 뒤 가장 넓은 곳의 폭을 그 절반쯤으로 잡아요."
+    },
+    {
+      "title": "주맥을 잎 한가운데에 두세요",
+      "detail": "그림에서는 주맥이 한쪽 윤곽에 치우쳐 있어요. 주맥을 먼저 긋고, 그 선에서 좌우 폭을 점으로 찍은 뒤 윤곽을 이어요."
+    },
+    {
+      "title": "가장 넓은 지점을 표시하세요",
+      "detail": "실물은 위에서 3분의 1쯤 내려온 곳이 가장 넓어요. 그 위치에 좌우 점을 찍어 두면 어깨 모양이 잡혀요."
+    }
+  ],
+  "practiceSteps": [
+    "주맥을 먼저 긋고 길이를 정해요.",
+    "가장 넓은 지점에 좌우 폭을 점으로 찍어요.",
+    "점을 이어서 윤곽을 그려요.",
+    "측맥 3~4쌍을 연하게 넣어요."
+  ],
+  "redLineCritiqueDetails": [
+    {
+      "targetPart": "잎끝 (Apex)",
+      "badge": "빨간 동그라미 보정",
+      "explanation": "잎끝 지점이 중앙선에 위치하도록 완만하게 굴곡을 정리해 보세요."
+    },
+    {
+      "targetPart": "측맥 위치 (Secondary Veins)",
+      "badge": "빨간 화살표 지시",
+      "explanation": "주맥 좌우로 일정 간격을 두고 30~45도 각도로 부드럽게 뻗어나가도록 표현하세요."
+    }
+  ],
+  "botanicalNotes": "실물 식물 관찰 시 잎자루에서 연결되는 주맥의 굵기 변화와 가장자리의 톱니 유무를 먼저 파악하면 정확도가 크게 향상됩니다."
+}
+
+참고: categories의 status 값은 "잘했어요", "손볼 곳", "무난해요", "아직 없어요" 4가지 중 하나를 상황에 맞게 사용하세요.`;
+
+            const parts = [{ text: promptText }];
+
+            if (realBase64) {
+                parts.push({
+                    inlineData: {
+                        mimeType: getMimeType(realBase64),
+                        data: getCleanBase64(realBase64)
+                    }
+                });
+            }
+
+            if (drawingBase64) {
+                parts.push({
+                    inlineData: {
+                        mimeType: getMimeType(drawingBase64),
+                        data: getCleanBase64(drawingBase64)
+                    }
+                });
+            }
+
+            const payload = {
+                contents: [{ role: "user", parts: parts }],
+                generationConfig: {
+                    responseMimeType: "application/json"
+                },
+                systemInstruction: {
+                    parts: [{
+                        text: "당신은 따뜻하고 명확하며 전문적인 식물 세밀화(Botanical Illustration) 거장이자 강사입니다. 학생들에게 알기 쉽고 체계적인 맞춤 피드백을 제공합니다."
+                    }]
+                }
+            };
+
+            let retries = 3;
+            let delay = 1000;
+            while (retries > 0) {
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                    const data = await response.json();
+                    
+                    const jsonText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+                    if (!jsonText) throw new Error("유효한 응답을 받지 못했습니다.");
+
+                    return JSON.parse(jsonText);
+                } catch (e) {
+                    retries--;
+                    if (retries === 0) throw e;
+                    await new Promise(r => setTimeout(r, delay));
+                    delay *= 2;
+                }
+            }
+        }
+
+        function getMimeType(base64Str) {
+            const match = base64Str.match(/^data:(image\/[a-zA-Z]+);base64,/);
+            return match ? match[1] : 'image/jpeg';
+        }
+
+        function getCleanBase64(base64Str) {
+            return base64Str.replace(/^data:image\/[a-zA-Z]+;base64,/, '');
+        }
+
+        function renderResults(data) {
+            // 1. 총평
+            document.getElementById('critique-overall-summary').textContent = data.summary || "스케치의 윤곽이 깨끗하고 안정적입니다.";
+
+            // 2. 항목별 분석 (Category List)
+            const catContainer = document.getElementById('category-critique-list');
+            catContainer.innerHTML = '';
+
+            const categories = data.categories || [
+                { name: "형태", status: "손볼 곳", comment: "실물 대비 비율 보정이 필요합니다." },
+                { name: "잎맥", status: "아직 없어요", comment: "주맥 선을 중심으로 측맥을 가볍게 추가해 보세요." },
+                { name: "가장자리", status: "무난해요", comment: "윤곽 연결 상태가 일정합니다." },
+                { name: "명암·질감", status: "아직 없어요", comment: "외곽 윤곽 완성 후 진행하시는 것을 추천합니다." },
+                { name: "선의 질", status: "잘했어요", comment: "선의 끊김이 적고 조절이 원활합니다." }
+            ];
+
+            categories.forEach(item => {
+                const row = document.createElement('div');
+                row.className = "py-3.5 flex flex-col sm:flex-row sm:items-baseline gap-2 sm:gap-6";
+
+                let badgeClass = "badge-none-yet";
+                if (item.status === "손볼 곳") badgeClass = "badge-need-fix";
+                else if (item.status === "잘했어요") badgeClass = "badge-well-done";
+                else if (item.status === "무난해요") badgeClass = "badge-fair";
+
+                row.innerHTML = `
+                    <div class="w-32 shrink-0 flex items-center justify-between sm:justify-start gap-3">
+                        <span class="font-bold text-gray-900 text-sm">${item.name}</span>
+                        <span class="${badgeClass}">${item.status}</span>
+                    </div>
+                    <p class="text-sm text-gray-600 leading-relaxed flex-1">
+                        ${item.comment}
+                    </p>
+                `;
+                catContainer.appendChild(row);
+            });
+
+            // 3. 잘한 점 Checklist
+            const strengthsList = document.getElementById('strengths-list');
+            strengthsList.innerHTML = '';
+            (data.strengths || []).forEach(str => {
+                const li = document.createElement('li');
+                li.className = "flex items-start gap-2.5";
+                li.innerHTML = `
+                    <span class="text-emerald-600 font-bold shrink-0">✓</span>
+                    <span>${str}</span>
+                `;
+                strengthsList.appendChild(li);
+            });
+
+            // 4. 고칠 점 우선순위 순
+            const priorityList = document.getElementById('priority-list');
+            priorityList.innerHTML = '';
+            (data.priorityImprovements || []).forEach((item, idx) => {
+                const card = document.createElement('div');
+                card.className = "flex items-start gap-3.5 p-1";
+                card.innerHTML = `
+                    <div class="w-6 h-6 rounded-full border-2 border-red-500 text-red-600 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
+                        ${idx + 1}
+                    </div>
+                    <div>
+                        <h5 class="font-bold text-gray-900 text-base mb-1">${item.title}</h5>
+                        <p class="text-xs sm:text-sm text-gray-600 leading-relaxed">${item.detail}</p>
+                    </div>
+                `;
+                priorityList.appendChild(card);
+            });
+
+            // 5. 다음 그림 연습 순서
+            const stepsList = document.getElementById('practice-steps-list');
+            stepsList.innerHTML = '';
+            (data.practiceSteps || []).forEach((stepText, idx) => {
+                const li = document.createElement('li');
+                li.className = "flex items-start gap-2";
+                li.innerHTML = `
+                    <span class="text-gray-500 font-mono font-bold shrink-0">${idx + 1}.</span>
+                    <span>${stepText}</span>
+                `;
+                stepsList.appendChild(li);
+            });
+
+            // Red Overlay Details Cards
+            const redCritiqueList = document.getElementById('red-critique-list');
+            redCritiqueList.innerHTML = '';
+            (data.redLineCritiqueDetails || []).forEach((item, idx) => {
+                const card = document.createElement('div');
+                card.className = "p-3.5 bg-white border border-red-100 rounded-lg shadow-2xs flex flex-col justify-between";
+                card.innerHTML = `
+                    <div>
+                        <div class="flex items-center justify-between mb-1">
+                            <span class="font-bold text-xs text-gray-900 flex items-center gap-1.5">
+                                <i class="fa-solid fa-circle text-red-500 text-[8px]"></i>
+                                ${item.targetPart || `포인트 ${idx + 1}`}
+                            </span>
+                            <span class="text-[10px] font-semibold px-2 py-0.5 bg-red-100 text-red-700 rounded">
+                                ${item.badge || '빨간펜 교정'}
+                            </span>
+                        </div>
+                        <p class="text-xs text-gray-600 leading-relaxed mt-1">
+                            ${item.explanation || '-'}
+                        </p>
+                    </div>
+                `;
+                redCritiqueList.appendChild(card);
+            });
+
+            // Botanical Note
+            document.getElementById('botanical-note-text').textContent = data.botanicalNotes || "식물 관찰 시 윤곽선과 주맥의 연결성을 중심에 두고 스케치해 보세요.";
+
+            // Save TTS text
+            state.lastCritiqueTextForTTS = `선생님 첨삭입니다. 총평: ${data.summary}. 잘한 점: ${(data.strengths || []).join(', ')}. 우선 고칠 점 첫 번째는 ${data.priorityImprovements?.[0]?.title || ''}입니다.`;
+
+            // Scroll to Results
+            resultSection.classList.remove('hidden');
+            resultSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        async function playTTSFeedback() {
+            if (!state.lastCritiqueTextForTTS) return;
+
+            const ttsBtnText = document.getElementById('tts-btn-text');
+            const btn = document.getElementById('btn-tts');
+
+            if (state.audioObj && !state.audioObj.paused) {
+                state.audioObj.pause();
+                ttsBtnText.textContent = "선생님 음성으로 들려주기";
+                return;
+            }
+
+            btn.disabled = true;
+            ttsBtnText.textContent = "음성 생성 중...";
+
+            try {
+                const apiKey = "";
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`;
+
+                const payload = {
+                    contents: [{
+                        parts: [{ text: `Say warmly and instructively in Korean as a botanical art teacher: ${state.lastCritiqueTextForTTS}` }]
+                    }],
+                    generationConfig: {
+                        responseModalities: ["AUDIO"],
+                        speechConfig: {
+                            voiceConfig: {
+                                prebuiltVoiceConfig: { voiceName: "Sulafat" }
+                            }
+                        }
+                    }
+                };
+
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) throw new Error("TTS Generation failed");
+                const result = await response.json();
+                
+                const part = result?.candidates?.[0]?.content?.parts?.[0];
+                const audioData = part?.inlineData?.data;
+                const mimeType = part?.inlineData?.mimeType || "audio/L16;rate=24000";
+
+                if (audioData) {
+                    const sampleRate = parseInt(mimeType.match(/rate=(\d+)/)?.[1] || "24000", 10);
+                    const pcm16Data = new Int16Array(base64ToArrayBuffer(audioData));
+                    const wavBlob = pcmToWav(pcm16Data, sampleRate);
+                    const audioUrl = URL.createObjectURL(wavBlob);
+
+                    if (state.audioObj) state.audioObj.pause();
+                    state.audioObj = new Audio(audioUrl);
+                    
+                    state.audioObj.onended = () => {
+                        ttsBtnText.textContent = "선생님 음성으로 들려주기";
+                    };
+
+                    await state.audioObj.play();
+                    ttsBtnText.textContent = "음성 일시정지";
+                } else {
+                    throw new Error("No audio payload received");
+                }
+            } catch (err) {
+                console.error("TTS Error:", err);
+                alert("음성을 생성하는데 실패했습니다. 잠시 후 다시 시도해주세요.");
+                ttsBtnText.textContent = "선생님 음성으로 들려주기";
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        // PCM WAV helper functions
+        function base64ToArrayBuffer(base64) {
+            const binaryString = atob(base64);
+            const len = binaryString.length;
+            const bytes = new Uint8Array(len);
+            for (let i = 0; i < len; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+            }
+            return bytes.buffer;
+        }
+
+        function pcmToWav(pcm16Data, sampleRate) {
+            const numChannels = 1;
+            const byteRate = sampleRate * numChannels * 2;
+            const blockAlign = numChannels * 2;
+            const buffer = new ArrayBuffer(44 + pcm16Data.length * 2);
+            const view = new DataView(buffer);
+
+            writeString(view, 0, 'RIFF');
+            view.setUint32(4, 36 + pcm16Data.length * 2, true);
+            writeString(view, 8, 'WAVE');
+            writeString(view, 12, 'fmt ');
+            view.setUint32(16, 16, true);
+            view.setUint16(20, 1, true);
+            view.setUint16(22, numChannels, true);
+            view.setUint32(24, sampleRate, true);
+            view.setUint32(28, byteRate, true);
+            view.setUint16(32, blockAlign, true);
+            view.setUint16(34, 16, true);
+            writeString(view, 36, 'data');
+            view.setUint32(40, pcm16Data.length * 2, true);
+
+            for (let i = 0; i < pcm16Data.length; i++) {
+                view.setInt16(44 + i * 2, pcm16Data[i], true);
+            }
+
+            return new Blob([buffer], { type: 'audio/wav' });
+        }
+
+        function writeString(view, offset, string) {
+            for (let i = 0; i < string.length; i++) {
+                view.setUint8(offset + i, string.charCodeAt(i));
+            }
+        }
+
+        // Preset Loader for Fast Previews
+        function loadPreset(type) {
+            if (type === 'scindapsus') {
+                document.getElementById('plant-name').value = '첫 번째 잎 그림 예시';
+                
+                // Real Specimen Canvas
+                const canvas1 = document.createElement('canvas');
+                canvas1.width = 600; canvas1.height = 600;
+                const ctx1 = canvas1.getContext('2d');
+                ctx1.fillStyle = '#f8f9f6'; ctx1.fillRect(0,0,600,600);
+                
+                ctx1.save();
+                ctx1.translate(300, 310);
+                ctx1.beginPath();
+                ctx1.moveTo(0, -200);
+                ctx1.bezierCurveTo(150, -100, 160, 100, 0, 180);
+                ctx1.bezierCurveTo(-160, 100, -150, -100, 0, -200);
+                
+                const grad = ctx1.createLinearGradient(-100, -200, 100, 200);
+                grad.addColorStop(0, '#2e5a3c');
+                grad.addColorStop(1, '#568b63');
+                ctx1.fillStyle = grad; ctx1.fill();
+                
+                ctx1.strokeStyle = '#a2cba9'; ctx1.lineWidth = 4;
+                ctx1.beginPath(); ctx1.moveTo(0, -200); ctx1.lineTo(0, 180); ctx1.stroke();
+                ctx1.restore();
+
+                // Drawing Canvas
+                const canvas2 = document.createElement('canvas');
+                canvas2.width = 600; canvas2.height = 600;
+                const ctx2 = canvas2.getContext('2d');
+                ctx2.fillStyle = '#fdfdfb'; ctx2.fillRect(0,0,600,600);
+                
+                ctx2.save();
+                ctx2.translate(270, 310); // Offset midrib slightly to match requested critique
+                ctx2.strokeStyle = '#333333'; ctx2.lineWidth = 2.5;
+                ctx2.beginPath();
+                ctx2.moveTo(0, -230);
+                ctx2.bezierCurveTo(120, -120, 110, 120, 0, 180);
+                ctx2.bezierCurveTo(-110, 120, -120, -120, 0, -230);
+                ctx2.stroke();
+
+                ctx2.beginPath(); ctx2.moveTo(0, -230); ctx2.lineTo(0, 180); ctx2.stroke();
+                ctx2.restore();
+
+                setImageData(1, canvas1.toDataURL('image/png'));
+                setImageData(2, canvas2.toDataURL('image/png'));
+
+                // Render Mock Data direct match to User's Sample
+                const sampleMockData = {
+                    summary: "윤곽선이 떨림 없이 매끄럽고, 연하게 시작해서 고치기 쉬운 상태예요. 가장 큰 차이인 전체 비율과 주맥 위치만 바로잡으면 훨씬 실물다워져요.",
+                    categories: [
+                        { name: "형태", status: "손볼 곳", comment: "실물은 통통한 달걀형인데 그림은 길쭉해요. 실물의 길이 대 폭은 약 2 대 1이에요." },
+                        { name: "잎맥", status: "아직 없어요", comment: "주맥만 있고 측맥은 아직 없어요. 다음 그림에서 3~4쌍만 연하게 넣어 보세요." },
+                        { name: "가장자리", status: "무난해요", comment: "가장자리가 매끈한 잎이라 윤곽을 부드럽게 이은 방향이 맞아요." },
+                        { name: "명암·질감", status: "아직 없어요", comment: "아직 명암이 없어요. 윤곽과 잎맥이 잡힌 뒤에 시작해도 늦지 않아요." },
+                        { name: "선의 질", status: "잘했어요", comment: "선이 끊이지 않고 한 번에 이어져 있어요. 힘 조절이 좋아요." }
+                    ],
+                    strengths: [
+                        "윤곽선이 매끄러워요. 한 번에 쭉 그어서 손 컨트롤이 생각보다 좋아요.",
+                        "연하게 시작했어요. 고치기 쉬워서 아주 좋은 습관이에요.",
+                        "잎 끝에서 두 선이 만나는 지점을 표현하려고 시도했어요."
+                    ],
+                    priorityImprovements: [
+                        { title: "전체 비율을 먼저 재 보세요", detail: "그리기 전에 길이와 폭이 대략 몇 대 몇인지 눈으로 재요. 이 잎은 2 대 1 정도라서, 주맥 길이를 정한 뒤 가장 넓은 곳의 폭을 그 절반쯤으로 잡아요." },
+                        { title: "주맥을 잎 한가운데에 두세요", detail: "그림에서는 주맥이 한쪽 윤곽에 치우쳐 있어요. 주맥을 먼저 긋고, 그 선에서 좌우 폭을 점으로 찍은 뒤 윤곽을 이어요." },
+                        { title: "가장 넓은 지점을 표시하세요", detail: "실물은 위에서 3분의 1쯤 내려온 곳이 가장 넓어요. 그 위치에 좌우 점을 찍어 두면 어깨 모양이 잡혀요." }
+                    ],
+                    practiceSteps: [
+                        "주맥을 먼저 긋고 길이를 정해요.",
+                        "가장 넓은 지점에 좌우 폭을 점으로 찍어요.",
+                        "점을 이어서 윤곽을 그려요.",
+                        "측맥 3~4쌍을 연하게 넣어요."
+                    ],
+                    redLineCritiqueDetails: [
+                        { targetPart: "전체 비율", badge: "빨간 점선 보정", explanation: "길이와 폭의 비율을 2:1로 맞추어 오목한 영역을 넓혀보세요." },
+                        { targetPart: "주맥 위치", badge: "빨간선 교정", explanation: "주맥이 한쪽에 쏠리지 않도록 중앙 중심선에 똑바로 위치시킵니다." }
+                    ],
+                    botanicalNotes: "달걀형 잎(Ovate Leaf)은 상단 1/3 지점이 가장 넓은 균형감을 가지고 있으므로 기준 점을 찍고 그리는 것이 유용합니다."
+                };
+
+                renderResults(sampleMockData);
+                generateFallbackRedOverlayCanvas(canvas2.toDataURL('image/png'));
+                document.getElementById('red-overlay-loading')?.classList.add('hidden');
+                statusText.innerHTML = `<span class="text-emerald-700 font-medium"><i class="fa-solid fa-circle-check mr-1"></i>샘플 피드백이 로드되었습니다.</span>`;
+            } else if (type === 'ginkgo') {
+                document.getElementById('plant-name').value = '은행나무 잎';
+
+                const canvas1 = document.createElement('canvas');
+                canvas1.width = 600; canvas1.height = 600;
+                const ctx1 = canvas1.getContext('2d');
+                ctx1.fillStyle = '#f8f9f6'; ctx1.fillRect(0,0,600,600);
+
+                ctx1.save();
+                ctx1.translate(300, 350);
+                ctx1.fillStyle = '#e5a92a';
+                ctx1.beginPath();
+                ctx1.moveTo(0, 100); ctx1.lineTo(0, 0);
+                ctx1.arc(0, 0, 200, -Math.PI * 0.85, -Math.PI * 0.15);
+                ctx1.closePath(); ctx1.fill();
+                ctx1.restore();
+
+                const canvas2 = document.createElement('canvas');
+                canvas2.width = 600; canvas2.height = 600;
+                const ctx2 = canvas2.getContext('2d');
+                ctx2.fillStyle = '#fdfdfb'; ctx2.fillRect(0,0,600,600);
+
+                ctx2.save();
+                ctx2.translate(300, 350);
+                ctx2.strokeStyle = '#222222'; ctx2.lineWidth = 3;
+                ctx2.beginPath();
+                ctx2.moveTo(0, 100); ctx2.lineTo(0, 0);
+                ctx2.arc(0, 0, 190, -Math.PI * 0.8, -Math.PI * 0.2);
+                ctx2.closePath(); ctx2.stroke();
+                ctx2.restore();
+
+                setImageData(1, canvas1.toDataURL('image/png'));
+                setImageData(2, canvas2.toDataURL('image/png'));
+
+                startCritique();
+            }
+        }
+    </script>
+</body>
+</html>
